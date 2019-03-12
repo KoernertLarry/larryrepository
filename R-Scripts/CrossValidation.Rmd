@@ -1,0 +1,79 @@
+
+
+---
+Author: "Lawrence Koerner"
+title: "CrossValidation"
+output: html_notebook
+---
+
+
+```{r}
+
+#install.packages("e1071")
+library(e1071)
+
+#import data
+data <-read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/breast-cancer-wisconsin.data")
+
+#name columns
+names(data) <- c("Sample Code Number", "Clump Thickness", "Uniformity of Cell Size", "Uniformity of Cell Shape", "Marginal Adhesion", "Single Epithelial Cell Size", "Bare Nuclei", "Bland Chromatin", "Normal Nucleoli", "Mitoses", "Class") 
+
+#Class becomes a factor and not a numeric
+data$Class <- as.factor(data$Class)
+
+#Remove ? from data
+data <- data[!(data$`Bare Nuclei` == '?'),] 
+
+#shuffle data
+data<-data[sample(nrow(data)),]
+
+#Create 10 equally size folds
+folds <- cut(seq(1,nrow(data)),breaks=10,labels=FALSE)
+
+#initializing vectors
+precisionV <- numeric()
+recallV <- numeric()
+fMeasureV <- numeric()
+accuracyV <- numeric()
+
+#cross validation from 1 to 10
+for(i in 1:10){
+    testIndexes <- which(folds==i,arr.ind=TRUE)
+    #create test data and training data
+    testData <- data[testIndexes, ]
+    trainData <- data[-testIndexes, ]
+  
+    #create classifiers useing training data
+    classifier <- naiveBayes(trainData[,2:10], trainData[,11])
+    #create predicitions with test data
+    tab <- table(predict(classifier, testData[,2:10]), testData[,11])
+    
+    #calculate precision
+    precision <- tab[1,1]/(tab[1,1] + tab[1,2])
+    precisionV[i] <- precision
+    
+    #calculate Recall
+    recall <- tab[1,1]/(tab[1,1] + tab[2,1])
+    recallV[i] <- recall
+    
+    #calculate F measure
+    fMeasure <- (2*precision*recall/(precision+recall))
+    fMeasureV[i] <- fMeasure
+    
+    #calculate accuracy
+    accuracy <-((tab[1,1] + tab[2,2])/sum(tab))
+    accuracyV[i] <- accuracy
+
+}
+#calculate averages
+avgPrecision <- (sum(precisionV)/10)
+avgRecall <- (sum(recallV)/10)
+avgfMeasure <- (sum(fMeasureV)/10)
+avgAccuracy <- (sum(accuracyV)/10)
+
+print(avgPrecision)
+print(avgRecall)
+print(avgfMeasure)
+print(avgAccuracy)
+```
+

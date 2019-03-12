@@ -1,0 +1,55 @@
+
+
+---
+Author: "Lawrence Koerner"
+title: "LogisticRegression"
+output: html_notebook
+---
+
+#K-NN vs Logistic Regression
+```{r}
+#import libraries
+#install.packages("kknn")
+library(kknn)
+#import data
+train <- read.csv("http://www.cse.lehigh.edu/~brian/course/2018/datascience/TitanicTrain.csv")
+test <- read.csv("http://www.cse.lehigh.edu/~brian/course/2018/datascience/TitanicTest.csv")
+
+#cleaning age by rounding to an integer
+train$age = floor(train$age)
+test$age = floor(test$age)
+#removing every row where age is NA or fare = 0, similar to Homework 5
+#removing NA for kknn method
+train <- train[train$fare != 0, ]
+test <- test[test$fare != 0, ]
+train <- train[!is.na(train$age), ]
+test <- test[!is.na(test$age), ]
+
+
+#use logistic regression glm
+train1 <- glm(survived ~ pclass + fare + sex + age + embarked, data = train, na.action = "na.omit")
+#compare
+p1 <- predict(train1, test)
+#create prediction
+prediction1 = as.vector(p1)
+prediction1 <- ifelse(prediction1 > 0.5, "1", "0")
+#make confusion matrix similar to Homework 6
+tab <- table(prediction1, test$survived)
+#print confusion Matrix
+tab
+#calculate accuracy same as Homework 6
+sum(diag(tab))/sum(tab)
+
+#use kknn same as 12IriskNNExample
+train2 <- kknn(survived ~ pclass + fare + sex + age + embarked, train, test)
+train2 <- fitted(train2)
+prediction2 <- ifelse(train2 > 0.5, "1", "0")
+tab2 <- table(prediction2, test$survived)
+tab2
+sum(diag(tab2))/sum(tab2)
+
+
+
+```
+According to the results, kknn gives a slightly more accurate model than the logistic regression, therefore I would recommend using the kknn method to create a model for this data.
+
